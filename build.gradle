@@ -4,6 +4,8 @@ plugins {
     id 'org.asciidoctor.convert' version '1.5.8'
     id 'java'
     id 'org.springframework.experimental.aot' version '0.12.0'
+    id 'com.palantir.docker' version '0.22.1'
+    id 'com.palantir.docker-run' version '0.22.1'
 }
 
 group = 'com.example'
@@ -17,8 +19,8 @@ configurations {
 }
 
 repositories {
-    maven { url 'https://repo.spring.io/release' }
     mavenCentral()
+    maven { url 'https://repo.spring.io/release' }
 }
 
 ext {
@@ -26,10 +28,29 @@ ext {
     set('springCloudVersion', "2021.0.3")
 }
 
+docker{
+    name "${project.name}:${project.version}"
+    files 'CurrencyGifProviding.jar'
+    tag 'DockerHub', "gusevang/currency-gif-application:${project.version}"
+}
+
+dockerRun{
+    name "${project.name}"
+    image "${project.name}:${project.version}"
+    ports '8080:8080'
+    clean true
+}
+
 dependencies {
+    compileOnly('org.springframework.boot:spring-boot-starter-data-elasticsearch')
+
     implementation 'com.google.code.gson:gson:2.8.6'
     implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
     implementation 'org.springframework.boot:spring-boot-starter-web'
+
+    implementation 'org.springframework.boot:spring-boot-starter-webflux'
+    testImplementation 'org.springframework.boot:spring-boot-starter-web'
+    testImplementation group: 'org.springframework.boot', name: 'spring-boot-starter-test', version: '2.7.0'
 
     implementation 'org.springframework.cloud:spring-cloud-starter-openfeign:3.1.2'
     implementation 'org.springframework.boot:spring-boot-starter-web-services'
@@ -42,13 +63,7 @@ dependencies {
     annotationProcessor 'org.projectlombok:lombok:1.18.22'
     developmentOnly 'org.springframework.boot:spring-boot-devtools'
     annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
-    testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.restdocs:spring-restdocs-mockmvc'
-
-
-    testImplementation('org.springframework.boot:spring-boot-starter-test') {
-        exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
-    }
 }
 
 test {
@@ -62,7 +77,7 @@ dependencyManagement {
 }
 
 tasks.named('test') {
-    outputs.dir snippetsDir
+
     useJUnitPlatform()
 }
 
